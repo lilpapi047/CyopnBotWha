@@ -12,3 +12,4 @@ commands/test.js
 test.*
 path.js
 .wwebjs_auth
+output.json
