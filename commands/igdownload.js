@@ -1,44 +1,63 @@
-const igd = require('fg-ig')
-module.exports.run = async (client, message, args, config) => {
-    const { id, from } = message
-    const { prefix } = config
-    let ra = []
+const { prefix } = require("../config.json");
+const igdl = require("fg-ig");
+const { MessageMedia } = require("whatsapp-web.js");
 
-    try {
-        if (!args.join("")) {
-            await client.reply(from, `Usa *${prefix}igdl [enlace] [indice(opcional)]*`, id)
+module.exports.run = async (message, args) => {
+  const arg = args[1] === undefined ? args[0] : args[1];
+  const url = arg[0];
+  const idx = arg[1];
+  let rs = [];
+  if (!url) {
+    message.reply(`Es necesario proporcionar un enlace
+Usa *${prefix}${this.config.name} [enlace] [indice(opcional)]* o su alias *${prefix}${this.config.alias} [enlace] [indice(opcional)]*.`);
+  } else {
+    const isUrl = url.match(
+      /(?:(?:http|https):\/\/)?(?:www\.)?(?:instagram\.com|instagr\.am)\/([A-Za-z0-9-_\.]+)/im
+    );
+    if (isUrl) {
+      try {
+        if (idx) {
+          let res = await igdl(url);
+          res.url_list.forEach((r) => {
+            rs.push(r);
+          });
+          const media = new MessageMedia.fromUrl(rs[idx - 1], {
+            unsafeMime: true,
+          });
+          message.reply(media, undefined, { caption: `w` });
         } else {
-            const arg = args[0]
-            const index = args[1]
-            const isUrl = arg.match(/(?:(?:http|https):\/\/)?(?:www\.)?(?:instagram\.com|instagr\.am)\/([A-Za-z0-9-_\.]+)/im)
-
-            if (isUrl) {
-                if (index) {
-                    let res = await igd(arg)
-                    res.url_list.forEach(r => {
-                        ra.push(r)
-                    });
-                    await client.sendFile(from, ra[index - 1], "nose", `w`, id)
-                } else {
-                    let res = await igd(arg)
-
-                    res.url_list.forEach(r => {
-                        client.sendFile(from, r, "nose", `w`, id)
-                    });
-                }
-            } else {
-                await client.reply(from, `El enlace no es valido`, id)
-            }
+          let res = await igdl(url);
+          let rs = [];
+          res.url_list.forEach((r) => {
+            rs.push(r);
+          });
+          for (const i in rs) {
+            const media = await MessageMedia.fromUrl(rs[i], {
+              unsafeMime: true,
+            });
+            message.reply(media, undefined, { caption: `w` });
+          }
         }
-    } catch (e) {
-        console.error(e)
-        await client.reply(from, `Ocurrio un error`, id)
+      } catch (e) {
+        console.error(
+          `Error en ${
+            this.config.name
+          } - Hora: ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}:\n`,
+          e.toString()
+        );
+        message.reply(
+          `Ocurrio un problema, si el problema persisite contacta a soporte.`
+        );
+      }
+    } else {
+      message.reply(`El enlace no es valido.`);
     }
-    await client.simulateTyping(from, false)
-}
+  }
+};
 
 module.exports.config = {
-    name: "igdownload",
-    aliases: 'igdl',
-    desc: 'Obtién multimedia de una publicacion de instagram'
-}
+  name: "igdownload",
+  alias: "igdl",
+  type:"misc",
+  descripcion: "Descarga multimedia de instagram.",
+};

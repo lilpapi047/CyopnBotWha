@@ -1,31 +1,32 @@
-const { decryptMedia } = require('@open-wa/wa-decrypt')
-const fs = require('fs')
-const { getBuffer, uploadImage } = require("../lib/functions")
-const path = require('path')
+const { prefix } = require("../config.json");
 
-module.exports.run = async (client, message, args, config) => {
-    const { id, from, quotedMsg } = message
-    const { prefix } = config
+module.exports.run = async (message) => {
+  const q = await message.getQuotedMessage();
+  if (q !== undefined && q.type === "sticker") {
     try {
-        if (quotedMsg && quotedMsg.type === 'sticker') {
-            await client.reply(from, `Espera un poco`, id)
-            const mediaData = await decryptMedia(quotedMsg)
-            const imageBase64 = `data:image/png;base64,${mediaData.toString(
-                'base64'
-            )}`;
-            await client.sendFile(from, imageBase64, "we.png", ``, id)
-        } else {
-            await client.reply(from, `Usa *${prefix}toimg* respondiendo un sticker`, id)
-        }
+      const media = await q.downloadMedia();
+      message.reply(media, undefined, { caption: `w` });
     } catch (e) {
-        console.error(e)
-        await client.reply(from, `Ocurrio un error`, id)
+      console.error(
+        `Error en ${
+          this.config.name
+        } - Hora: ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}:\n`,
+        e.toString()
+      );
+      message.reply(
+        `Ocurrio un problema, si el problema persisite contacta a soporte`
+      );
     }
-    await client.simulateTyping(from, false)
-}
+  } else {
+    message.reply(
+      `Debes responder a un sticker con el comando *${prefix}${this.config.name}* o su alias *${prefix}${this.config.alias}*`
+    );
+  }
+};
 
 module.exports.config = {
-    name: "toimg",
-    aliases: 'ti',
-    desc: 'Convierte un sticker a imagen'
-}
+  name: "toimg",
+  alias: "ti",
+  type: "misc",
+  descripcion: "Responde a un sticker para extraer la imagen.",
+};
