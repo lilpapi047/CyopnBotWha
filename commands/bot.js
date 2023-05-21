@@ -25,7 +25,7 @@ module.exports.run = async (message) => {
 };
 
 module.exports.config = {
-  name: "toimg",
+  name: "bot",
   alias: "ti",
   type: "misc",
   descripcion: "Responde a un sticker para extraer la imagen.",
